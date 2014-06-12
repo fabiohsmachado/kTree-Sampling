@@ -49,13 +49,25 @@ std::string CodeWord::toString()
 
 std::string CodeWord::SToString()
 {
-	std::stringstream SStream;
+	std::stringstream SStream, SSubStream;
 	std::string SString;
  std::vector<std::vector<int>>::iterator it;
  
  SStream << "(";
  for(it = S.begin(); it != S.end(); ++it)
-  SStream << "(" << (*it)[0] << "," << (*it)[1] << ")" << ",";
+ {
+  SSubStream.str(std::string());
+  SSubStream.clear();
+
+  SSubStream << "(";
+ 	std::copy((*it).begin(), (*it).end(), std::ostream_iterator<int>(SSubStream, ","));
+  SSubStream << ")";
+
+  SString = SSubStream.str();
+  SString.erase(SString.end() - 2);
+  SStream << SString;
+	}
+
  SStream << ")";
  
  SString = SStream.str();
