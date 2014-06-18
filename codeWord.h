@@ -99,6 +99,7 @@ int CodeWord::assertS(std::vector<std::vector<int>> S)
   if((*it).size() != 2)
   {
 			std::cerr << "Error: Each element of S must be a pair (node, label)." << std::endl;
+  	std::cerr << (*it)[0] << " " << (*it)[1] << " " << (*it)[2] << " " << (*it).size() << std::endl; 
    error = 1;
    break;
 		}
@@ -120,6 +121,7 @@ int CodeWord::assertS(std::vector<std::vector<int>> S)
 		if((*it)[1] > k)
   {
 			std::cerr << "Error: Labels in S cannot exceed k." << std::endl;
+  	std::cerr << (*it)[0] << " " << (*it)[1] << " " << (*it).size() << std::endl; 
    error = 1;
    break;	
 		}

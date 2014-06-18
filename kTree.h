@@ -3,7 +3,7 @@
 
 #include <iterator>
 #include <algorithm>
-#include <stdlib.h>
+#include <iostream>
 
 #include "codeWord.h"
 
@@ -11,29 +11,28 @@ class KTree
 {
  public:
   CodeWord *cw;
-		std::vector<std::vector<int>> TK;
-
-		std::vector<std::vector<int>> RK;
-		std::vector<std::vector<int>> T;
+		std::vector<std::vector<int>> *TK;
+		std::vector<std::vector<int>> *RK;
+		std::vector<std::vector<int>> *T;
 		std::vector<int> *phi, *phi_1;
   int n, k, qBar, lM;
 	 
-  KTree(CodeWord& cw);
-  KTree(std::vector<std::vector<int>> T, int k);
+  KTree(CodeWord cw);
+  KTree(std::vector<std::vector<int>> TK, int k);
   ~KTree();
 
-  std::vector<std::vector<int>> Decode (CodeWord *cw);
+  std::vector<std::vector<int>>* Decode (CodeWord cw);
   CodeWord* Encode ();
   int setQBar (std::vector<int> Q);
-		std::vector<int> *ComputePhi (std::vector<int> Q);
-		std::vector<int> *ComputePhi_1 (std::vector<int>* phi);
+		std::vector<int>* ComputePhi (std::vector<int> Q);
+		std::vector<int>* ComputePhi_1 (std::vector<int>* phi);
   int setLM (std::vector<std::vector<int>> S, std::vector<int> *phi_1);
-  std::vector<std::vector<int>> DandelionDecoding (std::vector<std::vector<int>> S, int r, int x);
+  std::vector<std::vector<int>> DandelionDecoding (std::vector<std::vector<int>> G, int r, int x);
   std::vector<int> Analyze (std::vector<std::vector<int>> G, std::vector<int> *mI, std::vector<int> status, int v);
-  std::vector<std::vector<int>> RebuildRK (std::vector<std::vector<int>> T);
-  std::vector<int> BreadthFirstOrder (std::vector<std::vector<int>> T);
-  std::vector<std::vector<int>> ApplyPhi_1 (std::vector<std::vector<int>> RK);
-  std::vector<std::vector<int>> ApplyPhi (std::vector<std::vector<int>> TK);
+  std::vector<std::vector<int>>* RebuildRK (std::vector<std::vector<int>>* T);
+  std::vector<int> BreadthFirstOrder (std::vector<std::vector<int>>* T);
+  std::vector<std::vector<int>>* ApplyPhi_1 (std::vector<std::vector<int>>* RK);
+  std::vector<std::vector<int>>* ApplyPhi (std::vector<std::vector<int>>* TK);
   void PrintTK();
   void PrintRK();
 
@@ -47,17 +46,14 @@ KTree::KTree (std::vector<std::vector<int>> TK, int k)
 {
 	this->n = TK.size();
  this->k = k;
- this->T = T;
+ this->TK = &TK;
 
  this->cw = Encode();
 }
 
-KTree::KTree (CodeWord& cw)
+KTree::KTree (CodeWord cw)
 {
- this->cw = &cw;
- this->n = cw.n;
- this->k = cw.k;
- this->TK = Decode(this->cw);
+ Decode(cw);
 }
 
 KTree::~KTree()
@@ -70,12 +66,12 @@ CodeWord* KTree::Encode ()
 	std::vector<int> Q;
  unsigned	int i, j;
  
- for(i = j = T.size() - 1; i != 0; i--, j--)
-		if(T[i][j] == k)
+ for(i = j = T->size() - 1; i != 0; i--, j--)
+		if((*T)[i][j] == k)
 			lM = i;
 
- for(i = 0; i < T.size(); i++)
-  if(T[i][lM] == -1)
+ for(i = 0; i < T->size(); i++)
+  if((*T)[i][lM] == -1)
    Q.push_back(i + 1);
 
  phi = ComputePhi(Q);
@@ -83,26 +79,30 @@ CodeWord* KTree::Encode ()
  return NULL;
 }
 
-std::vector<std::vector<int>> KTree::Decode (CodeWord *cw)
+std::vector<std::vector<int>>* KTree::Decode (CodeWord codeword)
 {
  int position;
- std::vector<std::vector<int>> TK;
+ std::vector<std::vector<int>> *TK, T;
 
+ this->cw = &codeword;
+ this->n = cw->n;
+ this->k = cw->k;
  std::sort(cw->Q.begin(), cw->Q.end());
 
- qBar = setQBar(cw->Q);
- phi = ComputePhi(cw->Q);
- phi_1 = ComputePhi_1(phi);
- lM = setLM(cw->S, phi_1);
+ this->qBar = setQBar(cw->Q);
+ this->phi = ComputePhi(cw->Q);
+ this->phi_1 = ComputePhi_1(phi);
+ this->lM = setLM(cw->S, phi_1);
 
 	position = (*phi)[lM - 1];
  if(position > qBar) position--;
- cw->S.insert(cw->S.begin() + position - 1, {0, -1});	
+ cw->S.insert(cw->S.begin() + position - 1, std::vector<int>({0, -1}));	
 
  T = DandelionDecoding(cw->S, 0, (*phi)[qBar - 1]);
- RK = RebuildRK(T);
- 
- TK = ApplyPhi_1(RK);
+ this->T = &T;
+
+ this->RK = RebuildRK(this->T);
+ this->TK = ApplyPhi_1(RK);
  
  return TK;
 }
@@ -198,46 +198,44 @@ int KTree::setLM (std::vector<std::vector<int>> S, std::vector<int> *phi_1)
  return lM;
 }
 
-std::vector<std::vector<int>> KTree::DandelionDecoding (std::vector<std::vector<int>> S, int r, int x)
+std::vector<std::vector<int>> KTree::DandelionDecoding (std::vector<std::vector<int>> G, int r, int x)
 {
-	std::vector<int> status(n-1, 0);
+	std::vector<int> status(n-k+1, 0);
 	std::vector<int> *mI;
 	std::vector<int>::iterator it;
  int i, j, swap;
 
  i = j = 0;
- for(i = 0; i < n-2; i++)
+ for(i = 0; i < n-k+1; i++)
 		if(i != r && i != x)
 		{
-			 S[j].insert(S[j].begin(), i);
+			G[j].insert(G[j].begin(), i);
    j++;
 		}
- S.insert(S.begin() + x - 1, {0, -1});
- S[0].insert(S[0].begin(), x);
-
-	std::sort(S.begin(), S.end(), *this);
+ G.insert(G.begin(), {x, r, -1});
+	std::sort(G.begin(), G.end(), *this);
 
  mI = new std::vector<int>;
  status[0] = 2;
- for(i = 1; i < n-2; i++)
-  status = Analyze(S, mI, status, i);
+ for(i = 1; i < n-k+1; i++)
+  status = Analyze(G, mI, status, i);
 
  if(!mI->empty())
  {
  	std::sort(mI->begin(), mI->end());
   for(it = mI->begin(); it != mI->end(); ++it)
   {
-   swap = S[*it - 1][2];
-   S[*it - 1][2] = S[x - 1][2];
-   S[x - 1][2] = swap;
+   swap = G[*it - 1][2];
+   G[*it - 1][2] = G[x - 1][2];
+   G[x - 1][2] = swap;
    
-   swap = S[*it - 1][1];
-   S[*it - 1][1] = S[x - 1][1];
-   S[x - 1][1] = swap;
+   swap = G[*it - 1][1];
+   G[*it - 1][1] = G[x - 1][1];
+   G[x - 1][1] = swap;
 		}
 	}
 
- return S;
+ return G;
 }
 
 /*
@@ -272,14 +270,17 @@ std::vector<int> KTree::Analyze (std::vector<std::vector<int>> G, std::vector<in
  return status;
 }
 
-std::vector<std::vector<int>> KTree::RebuildRK (std::vector<std::vector<int>> T)
+std::vector<std::vector<int>>* KTree::RebuildRK (std::vector<std::vector<int>>* T)
 {
- std::vector<std::vector<int>> RK(n, std::vector<int>(n, 0));
- std::vector<std::vector<int>> KV(n-k, std::vector<int>());
-	std::vector<int> R(k);
-	std::vector<int> bfs;
-	std::vector<int>::iterator itI, itJ;
+ std::vector<std::vector<int>>* RK;
+ std::vector<std::vector<int>>* KV;
+ std::vector<int> R(k+1, 0);
+ std::vector<int> bfs;
+ std::vector<int>::iterator itI, itJ;
  int i, j, v;
+
+ RK = new std::vector<std::vector<int>>(n, std::vector<int>(n, 0));
+ KV = new std::vector<std::vector<int>>(n-k, std::vector<int>(k+1, 0));
 
  bfs = BreadthFirstOrder(T);
 
@@ -289,38 +290,41 @@ std::vector<std::vector<int>> KTree::RebuildRK (std::vector<std::vector<int>> T)
  for(i = n-k; i < n; i++)
   for(j = i+1; j < n; j++)
   {
-   RK[i][j] = -1;
-   RK[j][i] = -1;
-   RK[i][i]++;
-   RK[j][j]++;			
+   (*RK)[i][j] = -1;
+   (*RK)[j][i] = -1;
+   (*RK)[i][i]++;
+   (*RK)[j][j]++;
 		}
 
  for(itI = bfs.begin(); itI != bfs.end(); itI++)
  {
-		if(T[*itI-1][1] == 0)
-   KV[*itI-1] = R;
+		if((*T)[*itI-1][1] == 0)
+  {
+			(*KV)[*itI-1] = R;
+   (*KV)[*itI-1].erase((*KV)[*itI-1].end() - 1);
+		}
 		else
   {
-			KV[*itI-1] = KV[T[*itI-1][1] - 1];
-   KV[*itI-1].erase(KV[*itI-1].begin() + T[*itI-1][2] - 1);
-			std::sort(KV[*itI-1].begin(), KV[*itI-1].end());
+			(*KV)[*itI-1] = (*KV)[(*T)[*itI-1][1] - 1];
+   (*KV)[*itI-1].erase((*KV)[*itI-1].begin() + (*T)[*itI-1][2] - 1);
+			std::sort((*KV)[*itI-1].begin(), (*KV)[*itI-1].end());
 		}
 
-		KV[*itI-1].push_back(*itI);
-  for(itJ = KV[*itI-1].begin(); itJ != KV[*itI-1].end() - 1; ++itJ)
+		(*KV)[*itI-1].push_back(*itI);
+  for(itJ = (*KV)[*itI-1].begin(); itJ != (*KV)[*itI-1].end() - 1; ++itJ)
 		{
-   v = *(KV[*itI-1].end() - 1) - 1;
-			RK[v][*itJ-1] = -1;
-   RK[*itJ-1][v] = -1;
-   RK[v][v]++;
-   RK[*itJ-1][*itJ-1]++;
-			}
+   v = *((*KV)[*itI-1].end() - 1) - 1;
+			(*RK)[v][*itJ-1] = -1;
+   (*RK)[*itJ-1][v] = -1;
+   (*RK)[v][v]++;
+   (*RK)[*itJ-1][*itJ-1]++;
+		}
 	}
 
- return RK;
+	return RK;
 }
 
-std::vector<int> KTree::BreadthFirstOrder (std::vector<std::vector<int>> T)
+std::vector<int> KTree::BreadthFirstOrder (std::vector<std::vector<int>>* T)
 {
  std::vector<std::vector<int>> TAdj(n-k+1, std::vector<int>(n-k+1, 0));
 	std::vector<int> bfs;
@@ -328,7 +332,7 @@ std::vector<int> KTree::BreadthFirstOrder (std::vector<std::vector<int>> T)
  int i, j, distance;
 
  for(i = 1; i <= n-k; i++)
-		TAdj[i][T[i - 1][1]] = 1;
+		TAdj[i][(*T)[i - 1][1]] = 1;
 
  bfs.push_back(0);
  for(it = bfs.begin(); it != bfs.end(); ++it)
@@ -345,26 +349,30 @@ std::vector<int> KTree::BreadthFirstOrder (std::vector<std::vector<int>> T)
  return bfs;
 }
 
-std::vector<std::vector<int>> KTree::ApplyPhi_1 (std::vector<std::vector<int>> RK)
+std::vector<std::vector<int>>* KTree::ApplyPhi_1 (std::vector<std::vector<int>>* RK)
 {
  int i, j;
- std::vector<std::vector<int>> TK(n, std::vector<int>(n));
+ std::vector<std::vector<int>>* TK;
+
+ TK = new std::vector<std::vector<int>>(n, std::vector<int>(n, 0));
 
  for(i = 0; i < n; i++)
   for(j = 0; j < n; j++)
-   TK[(*phi_1)[i]-1][(*phi_1)[j]-1] = RK[i][j];
+   (*TK)[(*phi_1)[i]-1][(*phi_1)[j]-1] = (*RK)[i][j];
 
  return TK;
 }
 
-std::vector<std::vector<int>> KTree::ApplyPhi (std::vector<std::vector<int>> TK)
+std::vector<std::vector<int>>* KTree::ApplyPhi (std::vector<std::vector<int>>* TK)
 {
  int i, j;
- std::vector<std::vector<int>> RK(n, std::vector<int>(n));
+ std::vector<std::vector<int>>* RK;
+
+ RK = new std::vector<std::vector<int>>(n, std::vector<int>(n, 0));
 
  for(i = 0; i < n; i++)
   for(j = 0; j < n; j++)
-   RK[(*phi)[i]-1][(*phi)[j]-1] = TK[i][j];
+   (*RK)[(*phi)[i]-1][(*phi)[j]-1] = (*TK)[i][j];
 
  return RK;
 }
@@ -376,7 +384,7 @@ void KTree::PrintTK()
 	for(i = 0; i < n; i++)
 	{
 		for(j = 0; j < n; j++)
-			std::cout << abs(TK[i][j]) << " ";
+			std::cout << abs((*TK)[i][j]) << " ";
 		std::cout << std::endl;
 	}
 }
@@ -388,7 +396,7 @@ void KTree::PrintRK()
 	for(i = 0; i < n; i++)
 	{
 		for(j = 0; j < n; j++)
-			std::cout << abs(RK[i][j]) << " ";
+			std::cout << abs((*RK)[i][j]) << " ";
 		std::cout << std::endl;
 	}
 }
