@@ -84,6 +84,8 @@ std::vector<std::vector<int>>* KTree::Decode (CodeWord codeword)
  int position;
  std::vector<std::vector<int>> *TK, T;
 
+	std::cout << "Decoding: " << codeword.toString() << std::endl;
+
  this->cw = &codeword;
  this->n = cw->n;
  this->k = cw->k;
@@ -158,7 +160,7 @@ int KTree::setQBar(std::vector<int> Q)
  for(it = Q.begin(); it != Q.end(); ++it)
  {
   if(qBar < *it) break;
-   qBar++;
+  else qBar++;
  }
 
  return qBar;
@@ -190,7 +192,7 @@ int KTree::setLM (std::vector<std::vector<int>> S, std::vector<int> *phi_1)
   else
   {
 			i++;
-   while((itVI != L.end()) && (*itVI == *itVI + 1))
+   while((itVI != L.end()) && (*itVI == *(itVI + 1)))
     itVI++;
 		}
  }

@@ -28,9 +28,7 @@ CodeWord::CodeWord(std::vector<int> Q, std::vector<std::vector<int>> S)
  k = Q.size();
  n = S.size() + k + 2;
 
-#ifdef DEBUG
 	if(assertS(S)) exit(1);
-#endif
 
  this->Q = Q;
  this->S = S;
@@ -67,7 +65,6 @@ std::string CodeWord::SToString()
   SString.erase(SString.end() - 2);
   SStream << SString;
 	}
-
  SStream << ")";
  
  SString = SStream.str();
@@ -99,7 +96,7 @@ int CodeWord::assertS(std::vector<std::vector<int>> S)
   if((*it).size() != 2)
   {
 			std::cerr << "Error: Each element of S must be a pair (node, label)." << std::endl;
-  	std::cerr << (*it)[0] << " " << (*it)[1] << " " << (*it)[2] << " " << (*it).size() << std::endl; 
+  	std::cerr << (*it).size() << std::endl; 
    error = 1;
    break;
 		}
