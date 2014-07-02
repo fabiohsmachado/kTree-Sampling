@@ -168,35 +168,19 @@ int KTree::setQBar(std::vector<int> Q)
 
 int KTree::setLM (std::vector<std::vector<int>> S, std::vector<int> *phi_1)
 {
-	std::vector<int> L;
+	std::vector<int> L(n-k+1, 0);
  std::vector<int>::iterator itVI;
  std::vector<std::vector<int>>::iterator itVVI;
- int i, kLeaf, lM;
+ int i, lM;
 
  for(itVVI = S.begin(); itVVI != S.end(); ++itVVI)
-  L.push_back((*itVVI)[0]);
+  L[(*itVVI)[0]] = -1;
 
-	std::sort(L.begin(), L.end());
-
- i = 1;
  lM = 0;
  for(itVI = L.begin() + 1; itVI != L.end(); ++itVI)
- {
-		if(i < *itVI)
-  {
-   kLeaf = (*phi_1)[i- 1];
-   if(lM < kLeaf)
-    lM = kLeaf;
-   i++;
-		}
-  else
-  {
-			i++;
-   while((itVI != L.end()) && (*itVI == *(itVI + 1)))
-    itVI++;
-		}
- }
- 
+  if((*itVI == 0) && (lM < (*phi_1)[*itVI]))
+   lM = (*phi_1)[*itVI];
+
  return lM;
 }
 
